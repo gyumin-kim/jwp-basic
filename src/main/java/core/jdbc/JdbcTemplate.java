@@ -7,29 +7,29 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class JdbcTemplate {
+public class JdbcTemplate {
 
-	public void update(String sql) throws SQLException {
+	public void update(String sql, PreparedStatementSetter pss) throws SQLException {
 		try (Connection con = ConnectionManager.getConnection();
 			 PreparedStatement pstmt = con.prepareStatement(sql)) {
-			setValues(pstmt);
+			pss.setValues(pstmt);
 			pstmt.executeUpdate();
 		}
 	}
 
 	@SuppressWarnings("rawtypes")
-	public List query(String sql) throws SQLException {
+	public List query(String sql, PreparedStatementSetter pss, RowMapper rowMapper) throws SQLException {
 		Connection con = null;
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		try {
 			con = ConnectionManager.getConnection();
 			pstmt = con.prepareStatement(sql);
-			setValues(pstmt);
+			pss.setValues(pstmt);
 			rs = pstmt.executeQuery();
 			List<Object> result = new ArrayList<>();
 			while (rs.next()) {
-				result.add(mapRow(rs));
+				result.add(rowMapper.mapRow(rs));
 			}
 			return result;
 		} finally {
@@ -46,15 +46,11 @@ public abstract class JdbcTemplate {
 	}
 
 	@SuppressWarnings("rawtypes")
-	public Object queryForObject(String sql) throws SQLException {
-		List result = query(sql);
+	public Object queryForObject(String sql, PreparedStatementSetter pss, RowMapper rowMapper) throws SQLException {
+		List result = query(sql, pss, rowMapper);
 		if (result.isEmpty()) {
 			return null;
 		}
 		return result.get(0);
 	}
-
-	public abstract void setValues(final PreparedStatement pstmt) throws SQLException;
-
-	public abstract Object mapRow(final ResultSet rs) throws SQLException;
 }
