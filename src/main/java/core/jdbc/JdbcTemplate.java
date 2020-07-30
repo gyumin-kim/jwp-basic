@@ -9,16 +9,29 @@ import java.util.List;
 
 public class JdbcTemplate {
 
-	public void update(String sql, PreparedStatementSetter pss) throws SQLException {
+	public void update(String sql, PreparedStatementSetter pss) throws DataAccessException {
 		try (Connection con = ConnectionManager.getConnection();
 			 PreparedStatement pstmt = con.prepareStatement(sql)) {
 			pss.setValues(pstmt);
 			pstmt.executeUpdate();
+		} catch (SQLException e) {
+			throw new DataAccessException(e);
 		}
 	}
 
-	@SuppressWarnings("rawtypes")
-	public List query(String sql, PreparedStatementSetter pss, RowMapper rowMapper) throws SQLException {
+	public void update(String sql, Object... parameters) throws DataAccessException {
+		try (Connection con = ConnectionManager.getConnection();
+			 PreparedStatement pstmt = con.prepareStatement(sql)) {
+			for (int i = 0; i < parameters.length; i++) {
+				pstmt.setObject(i + 1, parameters[i]);
+			}
+			pstmt.executeUpdate();
+		} catch (SQLException e) {
+			throw new DataAccessException(e);
+		}
+	}
+
+	public <T> List<T> query(String sql, PreparedStatementSetter pss, RowMapper<T> rowMapper) throws SQLException {
 		Connection con = null;
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
@@ -27,7 +40,7 @@ public class JdbcTemplate {
 			pstmt = con.prepareStatement(sql);
 			pss.setValues(pstmt);
 			rs = pstmt.executeQuery();
-			List<Object> result = new ArrayList<>();
+			List<T> result = new ArrayList<T>();
 			while (rs.next()) {
 				result.add(rowMapper.mapRow(rs));
 			}
@@ -45,9 +58,8 @@ public class JdbcTemplate {
 		}
 	}
 
-	@SuppressWarnings("rawtypes")
-	public Object queryForObject(String sql, PreparedStatementSetter pss, RowMapper rowMapper) throws SQLException {
-		List result = query(sql, pss, rowMapper);
+	public <T> T queryForObject(String sql, PreparedStatementSetter pss, RowMapper<T> rowMapper) throws SQLException {
+		List<T> result = query(sql, pss, rowMapper);
 		if (result.isEmpty()) {
 			return null;
 		}

@@ -6,7 +6,8 @@ import java.sql.SQLException;
 /**
  * callback interface
  */
-public interface RowMapper {
+@FunctionalInterface
+public interface RowMapper<T> {
 
-	Object mapRow(final ResultSet rs) throws SQLException;
+	T mapRow(final ResultSet rs) throws SQLException;
 }
