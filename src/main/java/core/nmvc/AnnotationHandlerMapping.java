@@ -1,20 +1,17 @@
 package core.nmvc;
 
-import java.lang.reflect.Method;
-import java.util.Map;
-import java.util.Set;
-
-import javax.servlet.http.HttpServletRequest;
-
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import core.annotation.RequestMapping;
+import core.annotation.RequestMethod;
 import org.reflections.ReflectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
-
-import core.annotation.RequestMapping;
-import core.annotation.RequestMethod;
+import javax.servlet.http.HttpServletRequest;
+import java.lang.reflect.Method;
+import java.util.Map;
+import java.util.Set;
 
 public class AnnotationHandlerMapping implements HandlerMapping {
     private static final Logger logger = LoggerFactory.getLogger(AnnotationHandlerMapping.class);
@@ -27,6 +24,10 @@ public class AnnotationHandlerMapping implements HandlerMapping {
         this.basePackage = basePackage;
     }
 
+    /**
+     * DispatcherServlet의 초기화 과정에서 호출된다.
+     * base package 하위의 모든 Bean들을 찾고, BeanFactory에게 bean 초기화 작업을 위임한다.
+     */
     public void initialize() {
         ControllerScanner controllerScanner = new ControllerScanner(basePackage);
         Map<Class<?>, Object> controllers = controllerScanner.getControllers();
