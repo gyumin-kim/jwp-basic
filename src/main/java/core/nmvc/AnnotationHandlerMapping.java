@@ -4,6 +4,8 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import core.annotation.RequestMapping;
 import core.annotation.RequestMethod;
+import core.di.factory.BeanFactory;
+import core.di.factory.BeanScanner;
 import org.reflections.ReflectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,8 +31,10 @@ public class AnnotationHandlerMapping implements HandlerMapping {
      * base package 하위의 모든 Bean들을 찾고, BeanFactory에게 bean 초기화 작업을 위임한다.
      */
     public void initialize() {
-        ControllerScanner controllerScanner = new ControllerScanner(basePackage);
-        Map<Class<?>, Object> controllers = controllerScanner.getControllers();
+        BeanScanner beanScanner = new BeanScanner(basePackage);
+        BeanFactory beanFactory = new BeanFactory(beanScanner.scan());
+        beanFactory.initialize();
+        Map<Class<?>, Object> controllers = beanFactory.getControllers();
         Set<Method> methods = getRequestMappingMethods(controllers.keySet());
         for (Method method : methods) {
             RequestMapping rm = method.getAnnotation(RequestMapping.class);
